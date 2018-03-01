@@ -1,7 +1,16 @@
 # backtracking.py
 
-from utils import (first, argmin_random_tie, num_legal_values, revise, same_row, same_col, same_box,
+"""
+All methods in csp.py are based on implementations from Russell And Norvig's "Artificial Intelligence - A Modern
+Approach" at https://github.com/aimacode/aima-python unless otherwise noted.
+"""
+
+from utils import (first, argmin_random_tie, num_legal_val, revise, same_row, same_col, same_box,
                    get_row, get_col, get_box)
+
+
+def equal_constraint(A, a, B, b):
+    return a != b
 
 
 def order_domain_values(var, assignment, csp):
@@ -14,7 +23,7 @@ def first_unassigned_variable(assignment, csp):
 
 def mrv(assignment, csp):
     return argmin_random_tie([v for v in csp.variables if v not in assignment],
-                             key=lambda var: num_legal_values(csp, var, assignment))
+                             key=lambda var: num_legal_val(csp, var, assignment))
 
 
 def no_inference(csp, var, value, assignment, removals):
@@ -42,6 +51,7 @@ def AC3(csp, queue=None, removals=None):
 
 
 def find_pairs(csp, removals):
+    """Custom implementation of hidden pairs inference method"""
     for v1 in csp.variables:
         d1 = set(csp.curr_domains[v1])
         for v2 in csp.neighbors[v1]:
@@ -61,29 +71,8 @@ def find_pairs(csp, removals):
                                 csp.prune(v3, d, removals)
 
 
-def find_intersections(csp, var, value, assignment, removals):
-
-    def intersection(overlap):
-        box = get_box(var)
-        if len(overlap) == 1 or len(overlap) == 2:
-            same = True
-            for v in overlap:
-                if box != get_box(v):
-                    same = False
-            if same:
-                for v in box:
-                    d = csp.curr_domains[v]
-                    if v != var and v not in overlap and value in d:
-                        csp.prune(v, value, removals)
-
-    row_overlap = [v for v in get_row(var) if v != var and value in csp.curr_domains[v]]
-    intersection(row_overlap)
-    col_overlap = [v for v in get_col(var) if v != var and value in csp.curr_domains[v]]
-    intersection(col_overlap)
-
-
 def init_domains(csp, assignment):
-    # d = {i: [j for j in range(1, 10) if j not in [assignment.get(n) for n in csp.neighbors[i]]] for i in csp.variables}
+    """Custom implementation of domain initialization preprocessing step"""
     d = {}
     for i in csp.variables:
         no = [assignment.get(n) for n in csp.neighbors[i]]
@@ -100,6 +89,7 @@ def init_domains(csp, assignment):
 
 
 def recursive_backtracking_search(assignment, csp, heuristic):
+    """Custom implementation of simple recursive backtracking-search"""
     if len(assignment) == len(csp.variables):
         return assignment
     var = heuristic(assignment, csp)
@@ -113,13 +103,14 @@ def recursive_backtracking_search(assignment, csp, heuristic):
     return None
 
 
-def instrumented_recursive_backtracking(assignment, csp, heuristic, guesses=0):
+def instrumented_recursive_backtracking(assignment, csp, heuristic, guesses=[]):
+    """Custom implementation of simple recursive backtracking-search instrumented to show number of guesses made"""
     if len(assignment) == len(csp.variables):
-        print('{} guesses'.format(guesses))
+        print('{} guesses'.format(sum(guesses)))
         return assignment
     var = heuristic(assignment, csp)
     values = order_domain_values(var, assignment, csp)
-    guesses += len(values) - 1
+    guesses.append(len(values) - 1)
     for value in values:
         if csp.nconflicts(var, value, assignment) == 0:
             csp.assign(var, value, assignment)
@@ -130,28 +121,31 @@ def instrumented_recursive_backtracking(assignment, csp, heuristic, guesses=0):
     return None
 
 
-def backtracking_search(a, csp, heuristic, inference):
+def backtracking_search(a, csp, heuristic, inference, all_methods):
+    """Custom implementation of backtracking-search instrumented to show number of guesses made"""
 
-    def backtrack(assignment, guesses=0):
+    def backtrack(assignment):
         if len(assignment) == len(csp.variables):
-            print('{} guesses'.format(guesses))
+            print('{} guesses'.format(sum(guesses)))
             return assignment
         var = heuristic(assignment, csp)
         values = order_domain_values(var, assignment, csp)
-        guesses += len(values) - 1
+        guesses.append(len(values) - 1)
         for value in values:
             if csp.nconflicts(var, value, assignment) == 0:
                 csp.assign(var, value, assignment)
                 removals = csp.suppose(var, value)
-                find_pairs(csp, removals)
-                # find_intersections(csp, var, value, assignment, removals)
+                if all_methods:
+                    find_pairs(csp, removals)
                 if inference(csp, var, value, assignment, removals):
-                    result = backtrack(assignment, guesses)
+                    result = backtrack(assignment)
                     if result is not None:
                         return result
                 csp.restore(removals)
         csp.unassign(var, assignment)
         return None
 
-    init_domains(csp, a)
-    return backtrack(a)
+    guesses = []
+    if all_methods:
+        init_domains(csp, a)
+    return backtrack({})

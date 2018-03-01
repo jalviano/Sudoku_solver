@@ -1,4 +1,9 @@
-# csp.py
+# utils.py
+
+"""
+All methods in utils.py are based on implementations from Russell And Norvig's "Artificial Intelligence - A Modern
+Approach" at https://github.com/aimacode/aima-python unless otherwise noted.
+"""
 
 import math
 import random
@@ -123,26 +128,31 @@ def is_in(elt, seq):
 
 
 def get_x(i):
+    """Custom method to map variable index to row in Sudoku grid"""
     return math.floor(i / 9)
 
 
 def get_y(i):
+    """Custom method to map variable index to column in Sudoku grid"""
     return i % 9
 
 
 def same_row(i, j):
+    """Custom method to check if two variables are in the same row"""
     if get_x(i) == get_x(j):
         return True
     return False
 
 
 def same_col(i, j):
+    """Custom method to check if two variables are in the same column"""
     if get_y(i) == get_y(j):
         return True
     return False
 
 
 def same_box(i, j):
+    """Custom method to check if two variables are in the same box"""
     xi = get_x(i)
     yi = get_y(i)
     xj = get_x(j)
@@ -151,18 +161,21 @@ def same_box(i, j):
 
 
 def get_col(i):
+    """Custom method to return all variables in the same column as the input variable"""
     return [j for j in range(0, 81) if same_col(i, j)]
 
 
 def get_row(i):
+    """Custom method to return all variables in the same row as the input variable"""
     return [j for j in range(0, 81) if same_row(i, j)]
 
 
 def get_box(i):
+    """Custom method to return all variables in the same box as the input variable"""
     return [j for j in range(0, 81) if same_box(i, j)]
 
 
-def num_legal_values(csp, var, assignment):
+def num_legal_val(csp, var, assignment):
     if csp.curr_domains:
         return len(csp.curr_domains[var])
     else:
@@ -170,8 +183,7 @@ def num_legal_values(csp, var, assignment):
 
 
 def argmin_random_tie(seq, key=(lambda x: x)):
-    # return min(shuffled(seq), key=key)
-    return min(seq, key=key)
+    return min(shuffled(seq), key=key)
 
 
 def shuffled(iterable):

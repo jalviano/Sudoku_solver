@@ -13,10 +13,20 @@ class SudokuIO(object):
         self.var_domain = [[None] * 9 for _ in range(self.NUM_VARS)]
         self.variables = [i for i in range(81)]
         self._build_puzzle()
-        self.domains = {i: [j for j in range(1, 10) if self.vars[i] == 0] for i in self.variables}
+        self.domains = self._domains()
         self.neighbors = {i: [j for j in range(81) if i != j and (same_row(i, j) or same_col(i, j) or same_box(i, j))]
                           for i in self.variables}
         self.assignment = {i: self.vars[i] for i in self.variables if self.vars[i] != 0}
+
+    def _domains(self):
+        d = {}
+        for i in self.variables:
+            if self.vars[i] == 0:
+                l = [j for j in range(1, 10)]
+            else:
+                l = [self.vars[i]]
+            d[i] = l
+        return d
 
     def _build_puzzle(self):
         file = open(self.input, 'r')
